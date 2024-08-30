@@ -1,18 +1,27 @@
-import React, { useEffect, useState } from "react";
-import List from "./component/List";
+import React, { useCallback, useEffect, useState } from "react";
+import Lists from "./component/Lists";
 import Form from "./component/Form";
 import "./App.css";
 
 export default function App() {
   const [todoData, setTodoData] = useState([]);
   const [value, setValue] = useState("");
-
   useEffect(() => {
-    const data = localStorage.getItem("my_todos");
-    if (data) {
-      setTodoData(JSON.parse(data));
+    const initialTodoData = localStorage.getItem("todoData");
+    if (initialTodoData) {
+      setTodoData(JSON.parse(initialTodoData));
+    } else {
+      setTodoData([]);
     }
   }, []);
+  const handleClick = useCallback(
+    (id) => {
+      let newTodoData = todoData.filter((data) => data.id !== id);
+      setTodoData(newTodoData);
+      localStorage.setItem("todoData", JSON.stringify(newTodoData));
+    },
+    [todoData]
+  );
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -22,28 +31,27 @@ export default function App() {
       completed: false,
     };
 
-    // 상태를 업데이트한 후 콜백에서 saveTodoData를 호출합니다.
-    setTodoData((prev) => {
-      const updatedTodoData = [...prev, newData];
-      saveTodoData(updatedTodoData);
-      return updatedTodoData;
-    });
+    setTodoData((prev) => [...prev, newData]);
+    localStorage.setItem("todoData", JSON.stringify([...todoData, newData]));
 
     setValue("");
   };
 
-  const saveTodoData = (data) => {
-    const jsonData = JSON.stringify(data);
-    localStorage.setItem("my_todos", jsonData);
+  const handleRemoveClick = () => {
+    localStorage.setItem("todoData", JSON.stringify([]));
   };
-
   return (
     <div className="flex items-center justify-center w-screen h-screen bg-blue-100">
       <div className="w-full p-6 m-4 bg-white rounded shadow lg:w-3/4 lg:max-w-lg">
         <div className="flex justify-between mb-3">
           <h1>할 일 목록</h1>
+          <button onClick={handleRemoveClick}>Delete All</button>
         </div>
-        <List todoData={todoData} setTodoData={setTodoData} />
+        <Lists
+          todoData={todoData}
+          setTodoData={setTodoData}
+          handleClick={handleClick}
+        />
         <Form
           handleSubmit={handleSubmit}
           setTodoData={setTodoData}
